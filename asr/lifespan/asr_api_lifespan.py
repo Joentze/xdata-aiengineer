@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from transformers import pipeline
+from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 from fastapi import FastAPI
 
 import logging
@@ -36,15 +36,15 @@ async def lifespan(app: FastAPI):
         "Loading in ASR model (facebook/wav2vec2-large-960h) from HuggingFace")
     try:
         if torch.cuda.is_available():
-            device = "cuda"
+            device = torch.device("cuda")
         elif torch.backends.mps.is_available():
-            device = "mps"
+            device = torch.device("mps")
         else:
-            device = "cpu"
+            device = torch.device("cpu")
         logger.info("Using device: %s", device)
-        app.state.asr = pipeline("automatic-speech-recognition",
-                                 model="facebook/wav2vec2-large-960h",
-                                 device=device)
+        app.state.processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h")
+        app.state.asr = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h").to(device)
+        app.state.device = device
     except Exception as e:
         logger.error("Failed to load ASR model: %s", e, exc_info=True)
 
@@ -53,3 +53,5 @@ async def lifespan(app: FastAPI):
     logger.info("Application stopping...")
     logger.info("Removing model from memory")
     del app.state.asr
+    del app.state.processor
+    del app.state.device

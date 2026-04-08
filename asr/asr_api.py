@@ -1,14 +1,16 @@
+import io
 import logging
 import time
 from typing import Annotated
 
+import librosa
+import torch
 from fastapi import FastAPI, Depends, HTTPException, UploadFile
 
 from lifespan.asr_api_lifespan import lifespan
 from dependencies.logger import get_logger
-from dependencies.asr import get_asr_model
+from dependencies.asr import get_asr_model, ASRModel
 from api_models.response import PingResponse, ASRResponse
-from transformers import AutomaticSpeechRecognitionPipeline
 
 app = FastAPI(lifespan=lifespan)
 
@@ -21,7 +23,7 @@ def ping(logger: Annotated[logging.Logger, Depends(get_logger)]) -> PingResponse
 
 @app.post("/asr", response_model=ASRResponse)
 def asr_transcribe(file: UploadFile,
-                   asr: Annotated[AutomaticSpeechRecognitionPipeline, Depends(get_asr_model)],
+                   asr: Annotated[ASRModel, Depends(get_asr_model)],
                    logger: Annotated[logging.Logger, Depends(get_logger)]) -> ASRResponse:
     logger.info(f"processing file {file.filename} of size {file.size}")
     if file.content_type != "audio/mpeg":
@@ -30,14 +32,27 @@ def asr_transcribe(file: UploadFile,
             status_code=415, detail=f"Unsupported file type: {file.content_type}. Expected audio file.")
 
     try:
+        audio_bytes = file.file.read()
+        audio_array, _ = librosa.load(io.BytesIO(audio_bytes), sr=16_000)
+
+        input_values = asr.processor(
+            audio_array, sampling_rate=16_000, return_tensors="pt"
+        ).input_values.to(asr.device)
+
         start = time.perf_counter()
-        result = asr(file.file)
+
+        with torch.no_grad():
+            logits = asr.model(input_values).logits
         duration = time.perf_counter() - start
+
+        predicted_ids = torch.argmax(logits, dim=-1)
+        transcription = asr.processor.batch_decode(predicted_ids)[0]
+
     except Exception as e:
         logger.error("Transcription failed for %s: %s", file.filename, e)
         raise HTTPException(status_code=500, detail="Transcription failed.")
 
-    return ASRResponse(transcription=result["text"], duration=str(round(duration, 1)))
+    return ASRResponse(transcription=transcription, duration=str(round(duration, 1)))
 
 
 if __name__ == "__main__":
