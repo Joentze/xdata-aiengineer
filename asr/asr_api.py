@@ -1,5 +1,6 @@
 import io
 import logging
+import threading
 import time
 from typing import Annotated
 
@@ -13,6 +14,8 @@ from dependencies.asr import get_asr_model, ASRModel
 from api_models.response import PingResponse, ASRResponse
 
 app = FastAPI(lifespan=lifespan)
+
+inference_lock = threading.Lock()
 
 
 @app.get("/ping", response_model=PingResponse)
@@ -33,20 +36,22 @@ def asr_transcribe(file: UploadFile,
 
     try:
         audio_bytes = file.file.read()
-        audio_array, _ = librosa.load(io.BytesIO(audio_bytes), sr=16_000)
 
-        input_values = asr.processor(
-            audio_array, sampling_rate=16_000, return_tensors="pt"
-        ).input_values.to(asr.device)
+        with inference_lock:
+            audio_array, _ = librosa.load(io.BytesIO(audio_bytes), sr=16_000)
 
-        start = time.perf_counter()
+            input_values = asr.processor(
+                audio_array, sampling_rate=16_000, return_tensors="pt"
+            ).input_values.to(asr.device)
 
-        with torch.no_grad():
-            logits = asr.model(input_values).logits
-        duration = time.perf_counter() - start
+            start = time.perf_counter()
 
-        predicted_ids = torch.argmax(logits, dim=-1)
-        transcription = asr.processor.batch_decode(predicted_ids)[0]
+            with torch.no_grad():
+                logits = asr.model(input_values).logits
+            duration = time.perf_counter() - start
+
+            predicted_ids = torch.argmax(logits, dim=-1)
+            transcription = asr.processor.batch_decode(predicted_ids)[0]
 
     except Exception as e:
         logger.error("Transcription failed for %s: %s", file.filename, e)
@@ -56,5 +61,7 @@ def asr_transcribe(file: UploadFile,
 
 
 if __name__ == "__main__":
+    import faulthandler
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    faulthandler.enable()
+    uvicorn.run(app, host="0.0.0.0", port=8001, log_level="debug")
