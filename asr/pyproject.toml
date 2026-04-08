@@ -1,19 +1,17 @@
 [tool.poetry]
-name = "xdata-aiengineer"
+name = "asr"
 version = "0.1.0"
-description = "assessment for xdata"
+description = "ASR (Automatic Speech Recognition) API service"
 authors = ["Joen Tan <joentze01@gmail.com>"]
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.15"
 fastapi = "^0.135.3"
 transformers = "^5.5.0"
-torch = "^2.11.0"
 uvicorn = "^0.44.0"
 python-multipart = "^0.0.24"
 librosa = "^0.11.0"
-
+torch = "^2.11.0"
 
 [build-system]
 requires = ["poetry-core"]
