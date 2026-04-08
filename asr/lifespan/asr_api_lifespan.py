@@ -35,8 +35,13 @@ async def lifespan(app: FastAPI):
     logger.info(
         "Loading in ASR model (facebook/wav2vec2-large-960h) from HuggingFace")
     try:
-        device = 0 if torch.cuda.is_available() else -1
-        logger.info("Using device: %s", "GPU (CUDA)" if device == 0 else "CPU")
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+        logger.info("Using device: %s", device)
         app.state.asr = pipeline("automatic-speech-recognition",
                                  model="facebook/wav2vec2-large-960h",
                                  device=device)
