@@ -57,7 +57,7 @@ def asr_transcribe(file: UploadFile,
         logger.error("Transcription failed for %s: %s", file.filename, e)
         raise HTTPException(status_code=500, detail="Transcription failed.")
 
-    return ASRResponse(transcription=transcription, duration=str(round(duration, 1)))
+    return ASRResponse(transcription=transcription, duration=str(round(duration, 4)))
 
 
 if __name__ == "__main__":

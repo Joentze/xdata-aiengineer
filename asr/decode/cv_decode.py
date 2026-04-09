@@ -8,7 +8,7 @@ import httpx
 API_ENDPOINT = "http://localhost:8001"
 COMMON_VOICE_DATASET_PATH = "../../common_voice"
 CSV_FILENAME = "cv-valid-dev.csv"
-BATCH_SIZE = 10
+BATCH_SIZE = 50
 
 client = httpx.AsyncClient(base_url=API_ENDPOINT, timeout=120.0)
 
@@ -22,7 +22,7 @@ async def ping():
     print("API is up.")
 
 
-async def transcribe(filename: str) -> tuple[str, str]:
+async def transcribe(filename: str) -> tuple[str, str, str]:
     filepath = os.path.join(COMMON_VOICE_DATASET_PATH,
                             "cv-valid-dev", filename)
 
@@ -31,8 +31,10 @@ async def transcribe(filename: str) -> tuple[str, str]:
         response = await client.post("/asr", files=files)
 
     response.raise_for_status()
-    transcription = response.json()["transcription"]
-    return filename, transcription
+    data = response.json()
+    transcription = data["transcription"]
+    duration = data["duration"]
+    return filename, transcription, duration
 
 
 async def main():
@@ -52,22 +54,29 @@ async def main():
         tasks = [transcribe(row["filename"]) for row in batch]
         results = await asyncio.gather(*tasks)
 
-        for filename, transcription in results:
-            result_map[filename] = transcription
+        for filename, transcription, duration in results:
+            result_map[filename] = {
+                "generated_text": transcription,
+                "duration": duration,
+            }
             truncated = (
                 transcription[:50] + "...") if len(transcription) > 50 else transcription
-            print(f"{len(result_map)}/{total} | {filename} | {truncated}")
+            print(f"{len(result_map)}/{total} | {filename} | {duration}s | {truncated}")
 
     for row in rows:
-        row["generated_text"] = result_map[row["filename"]]
+        row["generated_text"] = result_map[row["filename"]]["generated_text"]
+        row["duration"] = result_map[row["filename"]]["duration"]
 
-    fieldnames = rows[0].keys()
+    fieldnames = list(rows[0].keys())
+    for fieldname in ("duration", "generated_text"):
+        if fieldname not in fieldnames:
+            fieldnames.append(fieldname)
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"Done. Wrote generated_text column to {csv_path}")
+    print(f"Done. Wrote generated_text and duration columns to {csv_path}")
     await client.aclose()
 
 
