@@ -1,6 +1,7 @@
+from enum import verify
+import os
 from csv import DictReader
 from pathlib import Path
-
 from elasticsearch import Elasticsearch, helpers
 
 
@@ -33,7 +34,13 @@ def actions():
 
 
 def main():
-    client = Elasticsearch(ELASTICSEARCH_URL)
+    client = Elasticsearch(hosts=[ELASTICSEARCH_URL],
+                           basic_auth=('elastic', "elastic"),
+                           verify_certs=False,
+                           max_retries=30,
+                           retry_on_timeout=True,
+                           request_timeout=30,
+                           )
 
     if not client.indices.exists(index=INDEX_NAME):
         client.indices.create(

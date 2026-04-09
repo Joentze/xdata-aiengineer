@@ -5,10 +5,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/es': {
+      '/cv-transcriptions': {
         target: 'http://localhost:9200',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/es/, ''),
+        headers: {
+          Authorization: 'Basic ' + Buffer.from('elastic:elastic').toString('base64'),
+        },
       },
     },
   },

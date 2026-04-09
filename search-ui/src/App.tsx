@@ -8,13 +8,14 @@ import {
   ResultsPerPage,
   Facet,
   ErrorBoundary,
+  WithSearch,
 } from "@elastic/react-search-ui"
 import type { SearchResult } from "@elastic/search-ui"
 import "@elastic/react-search-ui-views/lib/styles/styles.css"
 import "./App.css"
 
 const connector = new ElasticsearchAPIConnector({
-  host: window.location.origin + "/es",
+  host: window.location.origin,
   index: "cv-transcriptions",
 })
 
@@ -23,15 +24,11 @@ const searchConfig = {
   alwaysSearchOnInitialLoad: false,
   searchQuery: {
     search_fields: {
-      text: { weight: 3 },
-      generated_text: { weight: 2 },
+      generated_text: { weight: 3 },
     },
     result_fields: {
-      text: { raw: {} },
-      generated_text: { raw: {} },
       filename: { raw: {} },
-      up_votes: { raw: {} },
-      down_votes: { raw: {} },
+      generated_text: { raw: {} },
       duration: { raw: {} },
       gender: { raw: {} },
       accent: { raw: {} },
@@ -46,23 +43,44 @@ const searchConfig = {
   },
 }
 
+function SearchIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  )
+}
+
+function WaveformIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12h2" /><path d="M6 8v8" /><path d="M10 4v16" /><path d="M14 6v12" /><path d="M18 9v6" /><path d="M22 12h-2" />
+    </svg>
+  )
+}
+
 function ResultView({ result }: { result: SearchResult }) {
   const get = (field: string) => result[field]?.raw ?? result[field]?.snippet
 
   return (
     <li className="sui-result">
       <div className="sui-result__body">
-        <div className="result-filename">{get("filename")}</div>
-        {get("text") && <p className="result-text">{get("text")}</p>}
+        <div className="result-header">
+          <span className="result-filename">{get("filename")}</span>
+          {get("duration") != null && (
+            <span className="result-duration-badge">
+              {Number(get("duration")).toFixed(1)}s
+            </span>
+          )}
+        </div>
         {get("generated_text") && (
           <p className="result-generated">
-            <span className="label">ASR:</span> {get("generated_text")}
+            <span className="label">Transcription</span>
+            {get("generated_text")}
           </p>
         )}
         <div className="result-meta">
-          {get("up_votes") != null && <span className="tag">+{get("up_votes")}</span>}
-          {get("down_votes") != null && <span className="tag">-{get("down_votes")}</span>}
-          {get("duration") != null && <span className="tag">{Number(get("duration")).toFixed(1)}s</span>}
           {get("gender") && <span className="tag">{get("gender")}</span>}
           {get("accent") && <span className="tag">{get("accent")}</span>}
           {get("age") && <span className="tag">{get("age")}</span>}
@@ -72,15 +90,35 @@ function ResultView({ result }: { result: SearchResult }) {
   )
 }
 
+function EmptyState() {
+  return (
+    <div className="empty-state">
+      <div className="empty-state-icon">
+        <SearchIcon size={24} />
+      </div>
+      <h2>Search transcriptions</h2>
+      <p>
+        Find Common Voice audio transcriptions by entering a query above.
+      </p>
+      <div className="keyboard-hint">
+        Press <span className="kbd">/</span> to focus search
+      </div>
+    </div>
+  )
+}
+
 function App() {
   return (
     <SearchProvider config={searchConfig}>
       <div className="search-app">
         <header className="search-header">
-          <h1>CV Transcription Search</h1>
-          <p className="subtitle">
-            Search Common Voice transcriptions indexed in Elasticsearch
-          </p>
+          <div className="brand">
+            <div className="brand-icon">
+              <WaveformIcon />
+            </div>
+            <h1>CV Transcriptions</h1>
+          </div>
+          <p className="subtitle">Search Common Voice transcriptions indexed in Elasticsearch</p>
         </header>
 
         <ErrorBoundary>
@@ -89,20 +127,28 @@ function App() {
             autocompleteSuggestions={false}
           />
 
-          <div className="search-body">
-            <aside className="search-sidebar">
-              <Facet field="gender" label="Gender" />
-              <Facet field="accent" label="Accent" isFilterable={true} />
-              <Facet field="age" label="Age" />
-            </aside>
-
-            <div className="search-content">
-              <PagingInfo />
-              <Results resultView={({ result }) => <ResultView result={result} />} />
-              <Paging />
-              <ResultsPerPage options={[10, 20, 50]} />
-            </div>
-          </div>
+          <WithSearch mapContextToProps={({ results }) => ({ results })}>
+            {({ results }) => {
+              if (!results || results.length === 0) {
+                return <EmptyState />
+              }
+              return (
+                <div className="search-body">
+                  <aside className="search-sidebar">
+                    <Facet field="gender" label="Gender" />
+                    <Facet field="accent" label="Accent" isFilterable={true} />
+                    <Facet field="age" label="Age" />
+                  </aside>
+                  <div className="search-content">
+                    <PagingInfo />
+                    <Results resultView={({ result }) => <ResultView result={result} />} />
+                    <Paging />
+                    <ResultsPerPage options={[10, 20, 50]} />
+                  </div>
+                </div>
+              )
+            }}
+          </WithSearch>
         </ErrorBoundary>
       </div>
     </SearchProvider>
