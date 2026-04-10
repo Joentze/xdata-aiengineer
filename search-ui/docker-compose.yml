@@ -1,0 +1,8 @@
+services:
+  search-ui:
+    build: .
+    environment:
+      - ELASTICSEARCH_URL=http://host.docker.internal:9200
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

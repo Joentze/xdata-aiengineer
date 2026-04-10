@@ -1,28 +1,28 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-root: #0C0D12;
-  --bg-surface: #151620;
-  --bg-elevated: #1C1D2B;
-  --bg-hover: rgba(255, 255, 255, 0.03);
-  --bg-input: #13141E;
+  --bg-root: #F8F9FB;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F0F1F4;
+  --bg-hover: rgba(0, 0, 0, 0.02);
+  --bg-input: #FFFFFF;
 
-  --border: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(124, 92, 252, 0.5);
-  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-focus: rgba(99, 72, 204, 0.5);
+  --border-subtle: rgba(0, 0, 0, 0.05);
 
-  --text-primary: #EDEDEF;
-  --text-secondary: #8B8D98;
-  --text-tertiary: #5C5E6A;
-  --text-accent: #A78BFA;
+  --text-primary: #1A1C23;
+  --text-secondary: #5A5D6B;
+  --text-tertiary: #8B8E9A;
+  --text-accent: #6348CC;
 
-  --accent: #7C5CFC;
-  --accent-hover: #6D4AED;
-  --accent-subtle: rgba(124, 92, 252, 0.1);
-  --accent-glow: rgba(124, 92, 252, 0.15);
+  --accent: #6348CC;
+  --accent-hover: #5238B5;
+  --accent-subtle: rgba(99, 72, 204, 0.08);
+  --accent-glow: rgba(99, 72, 204, 0.12);
 
-  --tag-bg: rgba(255, 255, 255, 0.05);
-  --tag-text: #9394A1;
+  --tag-bg: rgba(0, 0, 0, 0.04);
+  --tag-text: #5A5D6B;
 
   --sans: 'Outfit', system-ui, -apple-system, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -83,9 +83,9 @@ p { margin: 0; }
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgba(0, 0, 0, 0.12);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
 }
