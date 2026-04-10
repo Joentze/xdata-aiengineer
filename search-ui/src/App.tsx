@@ -4,7 +4,6 @@ import {
   SearchBox,
   Results,
   PagingInfo,
-  Paging,
   ResultsPerPage,
   Facet,
   ErrorBoundary,
