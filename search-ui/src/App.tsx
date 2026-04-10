@@ -15,7 +15,7 @@ import "@elastic/react-search-ui-views/lib/styles/styles.css"
 import "./App.css"
 
 const connector = new ElasticsearchAPIConnector({
-  host: window.location.origin,
+  host: `${window.location.origin}`,
   index: "cv-transcriptions",
 })
 
