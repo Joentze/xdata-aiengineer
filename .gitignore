@@ -213,3 +213,4 @@ skills-lock.json
 .agents/
 
 .cursor/
+.DS_Store
