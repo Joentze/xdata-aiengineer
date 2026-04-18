@@ -5,7 +5,7 @@ from pathlib import Path
 from elasticsearch import Elasticsearch, helpers
 
 
-ELASTICSEARCH_URL = "http://52.77.238.107:9200"
+ELASTICSEARCH_URL = "http://localhost:9200"
 INDEX_NAME = "cv-transcriptions"
 CSV_PATH = Path("cv-valid-dev.csv")
 BATCH_SIZE = 500
