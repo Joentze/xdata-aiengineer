@@ -57,3 +57,29 @@ bun run dev
 ```
 
 The app starts at `http://localhost:3000` (default Nitro port). The Nitro server proxy forwards `/cv-transcriptions/*` requests to Elasticsearch.
+
+---
+
+### ASR Service
+
+The ASR API runs a wav2vec2 model to transcribe audio files.
+
+**Local**
+
+```bash
+cd asr
+poetry install
+poetry run python asr_api.py
+```
+
+**Docker**
+
+```bash
+cd asr
+docker compose up -d --build
+```
+
+The API runs on `http://localhost:8001`. Endpoints:
+
+- `GET /ping` — health check
+- `POST /asr` — upload an `audio/mpeg` file to get a transcription back
