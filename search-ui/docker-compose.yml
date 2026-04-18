@@ -3,6 +3,7 @@ services:
     build: .
     image: 281525601194.dkr.ecr.ap-southeast-1.amazonaws.com/joentze/htx-xdata:search-ui
     environment:
+    # When run locally, make sure that local elasticsearch instance is running 
       - ELASTICSEARCH_URL=http://host.docker.internal:9200
     ports:
       - "3000:3000"
