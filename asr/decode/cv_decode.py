@@ -52,6 +52,7 @@ async def main():
     for i in range(0, total, BATCH_SIZE):
         batch = rows[i:i + BATCH_SIZE]
         tasks = [transcribe(row["filename"]) for row in batch]
+        # process each task asynchronously
         results = await asyncio.gather(*tasks)
 
         for filename, transcription, duration in results:

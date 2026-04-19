@@ -5,6 +5,7 @@ services:
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     user: "0"
+    # Generate CA and node TLS certificates for es01/es02 if not already present
     command: >
       bash -c '
         if [ ! -f config/certs/ca.zip ]; then
